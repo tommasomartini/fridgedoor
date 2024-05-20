@@ -1,0 +1,17 @@
+x3 doors
+x6 drawers
+
+x3 lamps
+
+** Uploading to Arduino Nano Every **
+Before uploading, open the serial monitor and set the baud rate to 1200.
+Other baud rates will interfere with the upload process.
+
+** Power consumption **
+One line detector sensor (of the ones I already had before starting this project).
+  Current measured on:
+  - data line: 0.0 uA in any state
+  - VCC line
+    - 5V:  17.2 mA when detection is on, 19.3 mA when detection is off
+    - 3V3: 10.5 mA when detection is on, 11.5 mA when detection is off
+
