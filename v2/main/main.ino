@@ -60,11 +60,11 @@ private:
   unsigned long timerStartedAtMs_ = 0;
 };
 
-const int numElements = 2;
+const int numElements = 3;
 FridgeDoor fridgeDoors[numElements] = {
   FridgeDoor(INPUT_0, OUTPUT_0, FORCE_OFF_AFTER_SECONDS),
   FridgeDoor(INPUT_1, OUTPUT_1, FORCE_OFF_AFTER_SECONDS),
-  // FridgeDoor(INPUT_2, OUTPUT_2, FORCE_OFF_AFTER_SECONDS),
+  FridgeDoor(INPUT_2, OUTPUT_2, FORCE_OFF_AFTER_SECONDS),
 };
 
 void trap() {
