@@ -1,6 +1,6 @@
 #include "Arduino.h"
 
-#define DEBUG 1
+// #define DEBUG 1
 
 // Force an OFF event after this timer, in milliseconds.
 // This is to avoid staying in ON mode indefinitely and thus save power.
