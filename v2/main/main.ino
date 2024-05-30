@@ -118,7 +118,7 @@ FridgeDoor::FridgeDoor(const int inputPin, const int outputPin, const int forceO
 :inputPin_(inputPin)
 ,outputPin_(outputPin)
 ,forceOffAfterMs_(max(0, forceOffAfterSeconds) * 1000) {
-  pinMode(inputPin, INPUT_PULLUP);
+  pinMode(inputPin, INPUT);
   pinMode(outputPin, OUTPUT);
   switchLamp(false);
 }
@@ -137,6 +137,8 @@ int FridgeDoor::restartTimer() {
 
 bool FridgeDoor::isDoorOpen() const {
   // When the door is open, signal is no longer detected and the sensor output is driven to HIGH by the pull-up resistor.
+  // This activates the NPN-BJT, which drives the output to HIGH.
+  // In short: high input means open door.
   return digitalRead(inputPin_);
 }
 
