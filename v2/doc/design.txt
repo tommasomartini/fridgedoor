@@ -15,3 +15,39 @@ One line detector sensor (of the ones I already had before starting this project
     - 5V:  17.2 mA when detection is on, 19.3 mA when detection is off
     - 3V3: 10.5 mA when detection is on, 11.5 mA when detection is off
 
+** Or-Gates **
+In order to save complexity and Arduino pins, I implemented three logical Or-Gates 
+to group multiple inputs. Since there will be three lamps, one for each section
+of the wardrobe, all the sensors in each section can be aggregate to drive the
+same lamp.
+In absence of IR light, digital sensor outputs are left floating, but the pullup
+resistor onboard drives the output pin to HIGH. That is: open door, output HIGH.
+When an IR light is detected, the photodiode becomes a conductor (in simpe words)
+and connects the output to ground, which is then driven to LOW. Again: closed door,
+output LOW.
+I initially connected all the outputs to the same terminal, with a pullup resistor
+driving everything to HIGH. When all doors are closed, each sensor is driving its
+output to LOW. If one door opens, its output is left floating, but the other connected
+outputs will drive it to LOW, since (presumably) the resistance to ground is lower
+than the resistance of the pullup.
+Therefore, no light will turn on, unless all doors are open and all outputs are
+left floating (or HIGH). I inadvertently implemented a logical-and instead.
+
+To implement a logical-or gate, I used a NPN BJT S8050 for each output.
+The output connects to the base through a 6.8 kOhm reistor (R1_i).
+All the collectors connect to Vcc (5V).
+All the emitters connect to ground through the same 51 kOhm resistor (R2).
+All the emitters also connect to the Arduino pin: this is the gate output.
+If all doors are closed, all outputs are low, all BJTs are off and
+the R2 resistor pulls the gate output to ground. Logical 0.
+If any door opens (one or more), the relative sensor output goes to HIGH
+and turns the BJT on. The BJT creates a path from Vcc to the gate output,
+which is turned HIGH, winning the pull of the pull-down resistor R2. Logical 1.
+
+I tried to dimension the entire circuit accounting for a max of 5 inputs
+for each or-gate, but I could not quite work it out. I measured that the
+gate output goes to 4.1 V, which is enough to be read as HIGH by Arduino,
+but I am probably consuming a suboptimal amount of current through R2.
+I measured about 200 mA when all doors are closed and 160 when all doors are
+open. Arduino and three sensors all had their LEDs still on.
+
