@@ -117,7 +117,7 @@ void loop()
 FridgeDoor::FridgeDoor(const int inputPin, const int outputPin, const int forceOffAfterSeconds)
 :inputPin_(inputPin)
 ,outputPin_(outputPin)
-,forceOffAfterMs_(max(0, forceOffAfterSeconds) * 1000) {
+,forceOffAfterMs_((unsigned long)max(0, forceOffAfterSeconds) * 1000) {
   pinMode(inputPin, INPUT);
   pinMode(outputPin, OUTPUT);
   switchLamp(false);
