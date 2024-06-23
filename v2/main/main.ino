@@ -122,6 +122,11 @@ void loop()
       Serial.print("  Failed with error code: ");
       Serial.println(error);
 #endif
+      // Turn all the FridgeDoors off.
+      for (int j = 0; j < numElements; ++j) {
+        fridgeDoors[j].turnOff();
+      }
+
       blinkError(i + 1);
     }
 #ifdef DEBUG
