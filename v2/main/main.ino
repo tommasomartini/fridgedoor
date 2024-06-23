@@ -47,6 +47,9 @@ public:
   // Performs an update cycle.
   int update();
 
+  // Turns this entitiy off. Cannot be undone.
+  void turnOff();
+
 private:
   int stopTimer();
   int restartTimer();
@@ -195,6 +198,11 @@ bool FridgeDoor::isStateTransitionAllowed() const {
   return (millis() - lastTransitionAtMs_) > minTimeBetweenTransitionsMs_;
 }
 
+void FridgeDoor::turnOff() {
+  switchLamp(false);
+  stopTimer();
+}
+
 int FridgeDoor::update() {
 #ifdef DEBUG
   Serial.print("  Current state: ");
@@ -245,6 +253,7 @@ int FridgeDoor::update() {
     case State::OFF:
       return SUCCESS;
       break;
+
     case State::INIT:
       if (doorIsOpen) {
         switchLamp(true);
