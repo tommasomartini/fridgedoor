@@ -100,6 +100,9 @@ void setup() {
   Serial.begin(9600);
   while (!Serial);
 #endif
+
+  // Let some time go by to avoid accidental 0 ms timers.
+  delay(500);
 }
 
 void loop() {
