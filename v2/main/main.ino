@@ -6,7 +6,7 @@
 // This is to avoid staying in ON mode indefinitely and thus save power.
 const int FORCE_OFF_AFTER_SECONDS = 60 * 5;
 
-const unsigned long UPDATE_INTERVAL_MS = 10;
+const unsigned long UPDATE_INTERVAL_MS = 100;
 
 // To avoid high frequency flip-flopping.
 const unsigned long MIN_TIME_BETWEEN_TRANSITIONS_SEC = 1;
