@@ -30,6 +30,7 @@ const int SUCCESS = 0;
 class FridgeDoor {
 private:
   enum class State {
+    OFF,
     INIT,
     DOOR_CLOSED_LIGHT_OFF,
     DOOR_OPEN_LIGHT_ON,
@@ -181,22 +182,12 @@ bool FridgeDoor::isStateTransitionAllowed() const {
 }
 
 int FridgeDoor::update() {
-  int error;
-
-  const bool isTransitionAllowed = isStateTransitionAllowed();
-  if (!isTransitionAllowed) {
-#ifdef DEBUG
-  Serial.println("Too early to perform a state transition");
-#endif
-    return SUCCESS;
-  }
-
-  const bool doorIsOpen = isDoorOpen();
-  const bool timerExpired = isTimerExpired();
-
 #ifdef DEBUG
   Serial.print("  Current state: ");
   switch (state_) {
+    case State::OFF:
+      Serial.println("OFF");
+      break;
     case State::INIT:
       Serial.println("INIT");
       break;
@@ -213,7 +204,22 @@ int FridgeDoor::update() {
       Serial.println("UNKNOWN");
       break;
   }
+#endif
 
+  int error;
+
+  const bool isTransitionAllowed = isStateTransitionAllowed();
+  if (!isTransitionAllowed) {
+#ifdef DEBUG
+  Serial.println("Too early to perform a state transition");
+#endif
+    return SUCCESS;
+  }
+
+  const bool doorIsOpen = isDoorOpen();
+  const bool timerExpired = isTimerExpired();
+
+#ifdef DEBUG
   Serial.print("  Door is open: ");
   Serial.println(doorIsOpen);
 
@@ -222,6 +228,9 @@ int FridgeDoor::update() {
 #endif
 
   switch (state_) {
+    case State::OFF:
+      return SUCCESS;
+      break;
     case State::INIT:
       if (doorIsOpen) {
         switchLamp(true);
