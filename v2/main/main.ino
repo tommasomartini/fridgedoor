@@ -8,6 +8,9 @@ const int FORCE_OFF_AFTER_SECONDS = 60 * 5;
 
 const unsigned long UPDATE_INTERVAL_MS = 10;
 
+// To avoid high frequency flip-flopping.
+const unsigned long MIN_TIME_BETWEEN_TRANSITIONS_SEC = 1;
+
 const int OUTPUT_0 = A0;
 const int OUTPUT_1 = A1;
 const int OUTPUT_2 = A2;
@@ -38,7 +41,7 @@ public:
   // connected in or-wiring, in parallel with a pull-up resistor.
   // This works on the assumption that IR sensors work in open-drain mode (no detection: open pin,
   // detection: drive to GND).
-  FridgeDoor(const int inputPin, const int outputPin, const int forceOffAfterSeconds);
+  FridgeDoor(const int inputPin, const int outputPin, const int forceOffAfterSeconds, const int minSecondsBetweenTransitions);
 
   // Performs an update cycle.
   int update();
@@ -46,6 +49,7 @@ public:
 private:
   int stopTimer();
   int restartTimer();
+  bool isStateTransitionAllowed() const;
   bool isDoorOpen() const;
   bool isTimerExpired() const;
   int switchLamp(const bool switchOn) const;
@@ -53,18 +57,20 @@ private:
   const int inputPin_;
   const int outputPin_;
   const unsigned long forceOffAfterMs_;
+  const unsigned long minTimeBetweenTransitionsMs_;
 
   State state_ = State::INIT;
 
   bool timerIsRunning_ = false;
   unsigned long timerStartedAtMs_ = 0;
+  unsigned long lastTransitionAtMs_ = 0;
 };
 
 const int numElements = 3;
 FridgeDoor fridgeDoors[numElements] = {
-  FridgeDoor(INPUT_0, OUTPUT_0, FORCE_OFF_AFTER_SECONDS),
-  FridgeDoor(INPUT_1, OUTPUT_1, FORCE_OFF_AFTER_SECONDS),
-  FridgeDoor(INPUT_2, OUTPUT_2, FORCE_OFF_AFTER_SECONDS),
+  FridgeDoor(INPUT_0, OUTPUT_0, FORCE_OFF_AFTER_SECONDS, MIN_TIME_BETWEEN_TRANSITIONS_SEC),
+  FridgeDoor(INPUT_1, OUTPUT_1, FORCE_OFF_AFTER_SECONDS, MIN_TIME_BETWEEN_TRANSITIONS_SEC),
+  FridgeDoor(INPUT_2, OUTPUT_2, FORCE_OFF_AFTER_SECONDS, MIN_TIME_BETWEEN_TRANSITIONS_SEC),
 };
 
 void trap() {
@@ -114,10 +120,15 @@ void loop()
 #endif
 }
 
-FridgeDoor::FridgeDoor(const int inputPin, const int outputPin, const int forceOffAfterSeconds)
+FridgeDoor::FridgeDoor(
+  const int inputPin,
+  const int outputPin,
+  const int forceOffAfterSeconds,
+  const int minSecondsBetweenTransitions)
 :inputPin_(inputPin)
 ,outputPin_(outputPin)
-,forceOffAfterMs_((unsigned long)max(0, forceOffAfterSeconds) * 1000) {
+,forceOffAfterMs_((unsigned long)max(0, forceOffAfterSeconds) * 1000) 
+,minTimeBetweenTransitionsMs_((unsigned long)max(0, minSecondsBetweenTransitions) * 1000) {
   pinMode(inputPin, INPUT);
   pinMode(outputPin, OUTPUT);
   switchLamp(false);
@@ -165,8 +176,20 @@ int FridgeDoor::switchLamp(const bool switchOn) const {
   return SUCCESS;
 }
 
+bool FridgeDoor::isStateTransitionAllowed() const {
+  return (millis() - lastTransitionAtMs_) > minTimeBetweenTransitionsMs_;
+}
+
 int FridgeDoor::update() {
   int error;
+
+  const bool isTransitionAllowed = isStateTransitionAllowed();
+  if (!isTransitionAllowed) {
+#ifdef DEBUG
+  Serial.println("Too early to perform a state transition");
+#endif
+    return SUCCESS;
+  }
 
   const bool doorIsOpen = isDoorOpen();
   const bool timerExpired = isTimerExpired();
@@ -205,11 +228,13 @@ int FridgeDoor::update() {
         error = restartTimer();
         if (error != SUCCESS) return error;
         state_ = State::DOOR_OPEN_LIGHT_ON;
+        lastTransitionAtMs_ = millis();
       } else {
         switchLamp(false);
         error = stopTimer();
         if (error != SUCCESS) return error;
         state_ = State::DOOR_CLOSED_LIGHT_OFF;
+        lastTransitionAtMs_ = millis();
       }
       break;
 
@@ -219,6 +244,7 @@ int FridgeDoor::update() {
         error = restartTimer();
         if (error != SUCCESS) return error;
         state_ = State::DOOR_OPEN_LIGHT_ON;
+        lastTransitionAtMs_ = millis();
 #ifdef DEBUG
         Serial.println("  DOOR_CLOSED_LIGHT_OFF -> DOOR_OPEN_LIGHT_ON");
 #endif
@@ -231,12 +257,14 @@ int FridgeDoor::update() {
         error = stopTimer();
         if (error != SUCCESS) return error;
         state_ = State::DOOR_CLOSED_LIGHT_OFF;
+        lastTransitionAtMs_ = millis();
 #ifdef DEBUG
         Serial.println("  DOOR_OPEN_LIGHT_ON -> DOOR_CLOSED_LIGHT_OFF");
 #endif
       } else if (timerExpired) {
         switchLamp(false);
         state_ = State::DOOR_OPEN_LIGHT_OFF;
+        lastTransitionAtMs_ = millis();
 #ifdef DEBUG
         Serial.println("  DOOR_OPEN_LIGHT_ON -> DOOR_OPEN_LIGHT_OFF");
 #endif
@@ -248,6 +276,7 @@ int FridgeDoor::update() {
         error = stopTimer();
         if (error != SUCCESS) return error;
         state_ = State::DOOR_CLOSED_LIGHT_OFF;
+        lastTransitionAtMs_ = millis();
 #ifdef DEBUG
         Serial.println("  DOOR_OPEN_LIGHT_OFF -> DOOR_CLOSED_LIGHT_OFF");
 #endif
