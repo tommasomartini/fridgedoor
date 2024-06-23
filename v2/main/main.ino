@@ -67,8 +67,22 @@ FridgeDoor fridgeDoors[numElements] = {
   FridgeDoor(INPUT_2, OUTPUT_2, FORCE_OFF_AFTER_SECONDS),
 };
 
-void trap() {
-  while(true);
+void blinkError(const int value) {
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
+
+  while(true) {
+    // Blink N times, with N the error value.
+    for (int i = 0; i < value; ++i) {
+      digitalWrite(LED_BUILTIN, HIGH);
+      delay(200);
+      digitalWrite(LED_BUILTIN, LOW);
+      delay(200);
+    }
+
+    // Stay off for a longer period.
+    delay(3000);
+  }
 }
 
 void setup()
@@ -98,7 +112,7 @@ void loop()
       Serial.print("  Failed with error code: ");
       Serial.println(error);
 #endif
-      trap();
+      blinkError(i + 1);
     }
 #ifdef DEBUG
     else {
