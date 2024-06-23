@@ -95,16 +95,14 @@ void blinkError(const int value) {
   }
 }
 
-void setup()
-{
+void setup() {
 #ifdef DEBUG
   Serial.begin(9600);
   while (!Serial);
 #endif
 }
 
-void loop()
-{
+void loop() {
 #ifdef DEBUG
   Serial.println("##########");
 #endif
